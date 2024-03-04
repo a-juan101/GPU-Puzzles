@@ -30,8 +30,8 @@
 # (If you are into this style of puzzle, also check out my [Tensor
 # Puzzles](https://github.com/srush/Tensor-Puzzles) for PyTorch.)
 
-!pip install -qqq git+https://github.com/danoneata/chalk@srush-patch-1
-!wget -q https://github.com/srush/GPU-Puzzles/raw/main/robot.png https://github.com/srush/GPU-Puzzles/raw/main/lib.py
+# !pip install -qqq git+https://github.com/danoneata/chalk@srush-patch-1
+# !wget -q https://github.com/srush/GPU-Puzzles/raw/main/robot.png https://github.com/srush/GPU-Puzzles/raw/main/lib.py
 
 
 import numba
@@ -44,7 +44,7 @@ warnings.filterwarnings(
 )
 
 
-# ## Puzzle 1: Map
+#%%## Puzzle 1: Map
 #
 # Implement a "kernel" (GPU function) that adds 10 to each position of vector `a`
 # and stores it in vector `out`.  You have 1 thread per position.
@@ -72,6 +72,7 @@ def map_test(cuda):
     def call(out, a) -> None:
         local_i = cuda.threadIdx.x
         # FILL ME IN (roughly 1 lines)
+        out[local_i] = a[local_i] + 10
 
     return call
 
@@ -82,13 +83,13 @@ a = np.arange(SIZE)
 problem = CudaProblem(
     "Map", map_test, [a], out, threadsperblock=Coord(SIZE, 1), spec=map_spec
 )
-problem.show()
+#problem.show()
 
 # +
 problem.check()
 # -
 
-# ## Puzzle 2 - Zip
+#%%## Puzzle 2 - Zip
 #
 # Implement a kernel that adds together each position of `a` and `b` and stores it in `out`.
 # You have 1 thread per position.
@@ -102,6 +103,7 @@ def zip_test(cuda):
     def call(out, a, b) -> None:
         local_i = cuda.threadIdx.x
         # FILL ME IN (roughly 1 lines)
+        out[local_i] = a[local_i] + b[local_i]
 
     return call
 
@@ -113,14 +115,14 @@ b = np.arange(SIZE)
 problem = CudaProblem(
     "Zip", zip_test, [a, b], out, threadsperblock=Coord(SIZE, 1), spec=zip_spec
 )
-problem.show()
+#problem.show()
 # +
 
 # +
 problem.check()
 # -
 
-# ## Puzzle 3 - Guards
+#%%## Puzzle 3 - Guards
 #
 # Implement a kernel that adds 10 to each position of `a` and stores it in `out`.
 # You have more threads than positions.
@@ -130,6 +132,8 @@ def map_guard_test(cuda):
     def call(out, a, size) -> None:
         local_i = cuda.threadIdx.x
         # FILL ME IN (roughly 2 lines)
+        if local_i < size:
+            out[local_i] = a[local_i] + 10
 
     return call
 
@@ -146,13 +150,13 @@ problem = CudaProblem(
     threadsperblock=Coord(8, 1),
     spec=map_spec,
 )
-problem.show()
+#problem.show()
 
 # +
 problem.check()
 # -
 
-# ## Puzzle 4 - Map 2D
+#%%## Puzzle 4 - Map 2D
 #
 # Implement a kernel that adds 10 to each position of `a` and stores it in `out`.
 # Input `a` is 2D and square. You have more threads than positions.
@@ -163,6 +167,8 @@ def map_2D_test(cuda):
         local_i = cuda.threadIdx.x
         local_j = cuda.threadIdx.y
         # FILL ME IN (roughly 2 lines)
+        if local_i < size and local_j < size:
+            out[local_i,local_j] = a[local_i,local_j] + 10
 
     return call
 
@@ -173,13 +179,13 @@ a = np.arange(SIZE * SIZE).reshape((SIZE, SIZE))
 problem = CudaProblem(
     "Map 2D", map_2D_test, [a], out, [SIZE], threadsperblock=Coord(3, 3), spec=map_spec
 )
-problem.show()
+#problem.show()
 
 # +
 problem.check()
 # -
 
-# ## Puzzle 5 - Broadcast
+#%%## Puzzle 5 - Broadcast
 #
 # Implement a kernel that adds `a` and `b` and stores it in `out`.
 # Inputs `a` and `b` are vectors. You have more threads than positions.
@@ -190,6 +196,8 @@ def broadcast_test(cuda):
         local_i = cuda.threadIdx.x
         local_j = cuda.threadIdx.y
         # FILL ME IN (roughly 2 lines)
+        if local_i < size and local_j < size:
+            out[local_i,local_j] = a[local_i,0] + b[0,local_j] 
 
     return call
 
@@ -207,13 +215,13 @@ problem = CudaProblem(
     threadsperblock=Coord(3, 3),
     spec=zip_spec,
 )
-problem.show()
+#problem.show()
 
 # +
 problem.check()
 # -
 
-# ## Puzzle 6 - Blocks
+#%%## Puzzle 6 - Blocks
 #
 # Implement a kernel that adds 10 to each position of `a` and stores it in `out`.
 # You have fewer threads per block than the size of `a`.
@@ -226,6 +234,8 @@ def map_block_test(cuda):
     def call(out, a, size) -> None:
         i = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
         # FILL ME IN (roughly 2 lines)
+        if i < size:
+            out[i] = a[i] + 10
 
     return call
 
@@ -243,13 +253,13 @@ problem = CudaProblem(
     blockspergrid=Coord(3, 1),
     spec=map_spec,
 )
-problem.show()
+#problem.show()
 
 # +
 problem.check()
 # -
 
-# ## Puzzle 7 - Blocks 2D
+#%%## Puzzle 7 - Blocks 2D
 #
 # Implement the same kernel in 2D.  You have fewer threads per block
 # than the size of `a` in both directions.
@@ -258,7 +268,9 @@ problem.check()
 def map_block2D_test(cuda):
     def call(out, a, size) -> None:
         i = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
-        # FILL ME IN (roughly 4 lines)
+        j = cuda.blockIdx.y * cuda.blockDim.y + cuda.threadIdx.y
+        if (i < size) and (j < size):
+            out[i,j] = a[i,j] + 10;
 
     return call
 
@@ -277,13 +289,13 @@ problem = CudaProblem(
     blockspergrid=Coord(2, 2),
     spec=map_spec,
 )
-problem.show()
+#problem.show()
 
 # +
 problem.check()
 # -
 
-# ## Puzzle 8 - Shared
+#%%## Puzzle 8 - Shared
 #
 # Implement a kernel that adds 10 to each position of `a` and stores it in `out`.
 # You have fewer threads per block than the size of `a`.
@@ -307,8 +319,7 @@ def shared_test(cuda):
         if i < size:
             shared[local_i] = a[i]
             cuda.syncthreads()
-
-        # FILL ME IN (roughly 2 lines)
+            out[i] = shared[local_i] + 10
 
     return call
 
@@ -326,13 +337,13 @@ problem = CudaProblem(
     blockspergrid=Coord(2, 1),
     spec=map_spec,
 )
-problem.show()
+#problem.show()
 
 # +
 problem.check()
 # -
 
-# ## Puzzle 9 - Pooling
+#%%## Puzzle 9 - Pooling
 #
 # Implement a kernel that sums together the last 3 position of `a` and stores it in `out`.
 # You have 1 thread per position. You only need 1 global read and 1 global write per thread.
@@ -371,13 +382,13 @@ problem = CudaProblem(
     blockspergrid=Coord(1, 1),
     spec=pool_spec,
 )
-problem.show()
+#problem.show()
 
 # +
 problem.check()
 # -
 
-# ## Puzzle 10 - Dot Product
+#%%## Puzzle 10 - Dot Product
 #
 # Implement a kernel that computes the dot-product of `a` and `b` and stores it in `out`.
 # You have 1 thread per position. You only need 2 global reads and 1 global write per thread.
@@ -414,13 +425,13 @@ problem = CudaProblem(
     blockspergrid=Coord(1, 1),
     spec=dot_spec,
 )
-problem.show()
+#problem.show()
 
 # +
 problem.check()
 # -
 
-# ## Puzzle 11 - 1D Convolution
+#%%## Puzzle 11 - 1D Convolution
 #
 # Implement a kernel that computes a 1D convolution between `a` and `b` and stores it in `out`.
 # You need to handle the general case. You only need 2 global reads and 1 global write per thread.
@@ -465,7 +476,7 @@ problem = CudaProblem(
     Coord(TPB, 1),
     spec=conv_spec,
 )
-problem.show()
+#problem.show()
 
 # +
 problem.check()
@@ -487,14 +498,14 @@ problem = CudaProblem(
     Coord(TPB, 1),
     spec=conv_spec,
 )
-problem.show()
+#problem.show()
 # -
 
 # +
 problem.check()
 # -
 
-# ## Puzzle 12 - Prefix Sum
+#%%## Puzzle 12 - Prefix Sum
 #
 # Implement a kernel that computes a sum over `a` and stores it in `out`.
 # If the size of `a` is greater than the block size, only store the sum of
@@ -540,7 +551,7 @@ problem = CudaProblem(
     Coord(TPB, 1),
     spec=sum_spec,
 )
-problem.show()
+#problem.show()
 
 # +
 problem.check()
@@ -562,13 +573,13 @@ problem = CudaProblem(
     Coord(TPB, 1),
     spec=sum_spec,
 )
-problem.show()
+#problem.show()
 
 # +
 problem.check()
 # -
 
-# ## Puzzle 13 - Axis Sum
+#%%## Puzzle 13 - Axis Sum
 #
 # Implement a kernel that computes a sum over each column of `a` and stores it in `out`.
 
@@ -606,13 +617,13 @@ problem = CudaProblem(
     Coord(TPB, 1),
     spec=sum_spec,
 )
-problem.show()
+#problem.show()
 
 # +
 problem.check()
 # -
 
-# ## Puzzle 14 - Matrix Multiply!
+#%%## Puzzle 14 - Matrix Multiply!
 #
 # Implement a kernel that multiplies square matrices `a` and `b` and
 # stores the result in `out`.
