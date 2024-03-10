@@ -365,6 +365,14 @@ def pool_test(cuda):
         i = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
         local_i = cuda.threadIdx.x
         # FILL ME IN (roughly 8 lines)
+        if i < size:
+            if i == 0:
+                out[i] = a[i];
+            elif i == 1:
+                out[i] = a[i] + a[i-1];
+            else:
+                out[i] = a[i] + a[i-1] + a[i-2]
+                    
 
     return call
 
@@ -408,6 +416,15 @@ def dot_test(cuda):
         i = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
         local_i = cuda.threadIdx.x
         # FILL ME IN (roughly 9 lines)
+        if i < size:
+            shared[local_i] = a[i] * b[i]
+            cuda.syncthreads()
+        if local_i == 0:
+            s = 0
+            for k in range(size):
+                s += shared[k]
+            out[0] = s
+            
     return call
 
 
@@ -672,7 +689,7 @@ problem = CudaProblem(
     Coord(TPB, TPB),
     spec=matmul_spec,
 )
-problem.show(sparse=True)
+#problem.show(sparse=True)
 
 # +
 problem.check()
@@ -696,7 +713,7 @@ problem = CudaProblem(
     Coord(TPB, TPB),
     spec=matmul_spec,
 )
-problem.show(sparse=True)
+#problem.show(sparse=True)
 # -
 
 # +
